@@ -1,26 +1,57 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import fire from './fire';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+interface IState {
+  messages: Message[],
+  notes: string[]
 }
 
-export default App;
+interface Message {
+  text: any;
+  id: string | null;
+}
+interface IProps {
+
+}
+export default class App extends React.Component<IProps, IState> {
+  public inputEl: HTMLInputElement;
+  constructor(p: IProps) {
+    super(p);
+    this.inputEl = null;
+    this.state = { 
+      messages: [],
+      notes: [""]
+     }; // <- set up react state
+  }
+
+  componentWillMount() {
+    /* Create reference to messages in Firebase Database */
+    let messagesRef = fire.database().ref('messages').orderByKey().limitToLast(100);
+    messagesRef.on('child_added', snapshot => {
+      /* Update React state when message is added at Firebase Database */
+      let message = { text: snapshot.val(), id: snapshot.key };
+      this.setState({ messages: [message].concat(this.state.messages) });
+    })
+  }
+  private addMessage = () => {
+    // e.preventDefault(); // <- prevent form submit from reloading the page
+    /* Send the message to Firebase */
+    fire.database().ref('messages').push(this.inputEl.value);
+    this.inputEl.value = ''; // <- clear the input
+  }
+
+  render() {
+    return (
+      <>
+        <input type="text" ref={el => this.inputEl = el} />
+        <button onClick={() => this.addMessage()}>Add to DB</button>
+        <ul>
+          { /* Render the list of messages */
+            this.state.messages.map(message => <li key={message.id}>{message.text}</li>)
+          }
+        </ul>
+      </>
+    );
+  }
+}
