@@ -34,15 +34,6 @@ export default class App extends React.Component<IProps, IState> {
       messages: []
     };
 
-    // <- set up react state
-    // if(this.state.currentUser){
-    //   this.addUser();
-    // }
-
-
-    /* Create reference to messages in Firebase Database */
-
-
   }
 
 
@@ -76,6 +67,59 @@ export default class App extends React.Component<IProps, IState> {
   }
 
 
+  
+
+  addMessage = () => {
+    fire.database().ref('messages').push("test").catch(reason => {
+      console.log(reason);
+      // database rule:
+      //".write": "auth.token.email === 'molodtsovdenis@gmail.com'"
+    })
+  }
+
+
+  addUser = () => {
+    fire.database().ref(`users/${this.state.currentUser.uid}`).set({      
+        name: this.state.currentUser.displayName,
+        email: this.state.currentUser.email,
+        roles:{'admin':true}      
+    });
+  }
+
+  
+  signOut = async () => {
+    await firebase.auth().signOut();
+
+    this.setState({
+      currentUser: null
+    });
+  }
+
+  SignOutButton = () => {
+    return (<>
+      <button onClick={this.signOut}>
+        Sign out
+      </button>
+    </>)
+  }
+
+
+  Authentication = () => {
+    const uiConfig = {
+      // Popup signin flow rather than redirect flow.
+      signInFlow: 'popup',
+      // Redirect to /signedIn after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
+      signInSuccessUrl: '/',
+      // We will display Google and Facebook as auth providers.
+      signInOptions: [
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      ]
+    };
+    return <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={firebase.auth()}
+    />
+  }
+
   render() {
     return (
       <>
@@ -100,60 +144,10 @@ export default class App extends React.Component<IProps, IState> {
           {this.state.messages.map(message => <li key={message.id}>{message.text}</li>)}
         </ul>
         }
+        
 
       </>
     );
   }
-
-  addMessage = () => {
-    fire.database().ref('messages').push("test").catch(reason => {
-      console.log(reason);
-      // database rule:
-      //".write": "auth.token.email === 'molodtsovdenis@gmail.com'"
-    })
-  }
-
-
-  addUser = () => {
-    return;
-    fire.database().ref('users').push({
-      uid: this.state.currentUser.uid,
-      name: this.state.currentUser.displayName,
-      email: this.state.currentUser.email
-    });
-  }
-
-  Authentication = () => {
-    const uiConfig = {
-      // Popup signin flow rather than redirect flow.
-      signInFlow: 'popup',
-      // Redirect to /signedIn after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
-      signInSuccessUrl: '/',
-      // We will display Google and Facebook as auth providers.
-      signInOptions: [
-        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-        firebase.auth.EmailAuthProvider.PROVIDER_ID,
-      ]
-    };
-    return <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={firebase.auth()}
-    />
-  }
-
-  signOut = async () => {
-    await firebase.auth().signOut();
-
-    this.setState({
-      currentUser: null
-    });
-  }
-
-  SignOutButton = () => {
-    return (<>
-      <button onClick={this.signOut}>
-        Sign out
-      </button>
-    </>)
-  }
-
 
 }
